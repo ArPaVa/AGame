@@ -17,6 +17,7 @@ class Map:  #have a map
             for j in range(self.map_matrix.shape[1]):
                 if self.map_matrix[i,j]==0:
                     return i,j
+    #TODO Maybe make subscriptable giving the map_matrix thingy
 
 class Player:
     def __init__(self,initial_x, initial_y):
@@ -75,6 +76,28 @@ class Game:
         pygame.init()
         window = pygame.display.set_mode(self.settings.provide_settings("resolution"))
         window.fill((255,255,255))
-        pygame.draw.rect(window,(0,0,255),[100,100,400,100],2)
+        temporal_materials = dict()
+        temporal_materials[0] = (30,30,100)
+        temporal_materials[1] = (150,100,100)
+        temporal_materials[-1]= (150,70,70)
+        
+        # x_size_of_rect = self.settings.provide_settings("resolution")[0]/self.map.map_matrix.shape[0]
+        # y_size_of_rect = self.settings.provide_settings("resolution")[1]/self.map.map_matrix.shape[1]
+        # x_center_of_rect = x_size_of_rect/2
+        # y_center_of_rect = y_size_of_rect/2
+        # for x in range(self.map.map_matrix.shape[0]):
+        #     for y in range(self.map.map_matrix.shape[1]):
+        #         color = temporal_materials[self.map.map_matrix[x,y]]
+        #         pygame.draw.rect(window,color,pygame.Rect((x_center_of_rect*x,y_center_of_rect*y),(x_size_of_rect,y_size_of_rect)))
+        x_size_of_rect = self.settings.provide_settings("resolution")[0]/self.map.map_matrix.shape[0]
+        y_size_of_rect = self.settings.provide_settings("resolution")[1]/self.map.map_matrix.shape[1]
+        #drawing the map
+        for x in range(self.map.map_matrix.shape[0]):
+            for y in range(self.map.map_matrix.shape[1]):
+                color = temporal_materials[self.map.map_matrix[x,y]]
+                pygame.draw.rect(window,color,pygame.Rect((x_size_of_rect*y,y_size_of_rect*x),(x_size_of_rect,y_size_of_rect)))
+        #drawing the player 
+        pygame.draw.rect(window,temporal_materials[-1],pygame.Rect((x_size_of_rect*self.player.pos_y,y_size_of_rect*self.player.pos_x),(x_size_of_rect,y_size_of_rect)))
+        #pygame.draw.rect(window,(0,0,255),[100,100,400,100],2)
         return window
 
