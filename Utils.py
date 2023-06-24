@@ -15,8 +15,7 @@ class Map:  #have a map
                     self.map_matrix[i,j]= Air()
             
         print(self.map_matrix)
-    
-    
+      
     def valid_posc(self,x,y):
         if x>-1 and x < self.map_matrix.shape[0] and y>-1 and y < self.map_matrix.shape[1]:
             return True
@@ -36,8 +35,84 @@ class Player:
     def __init__(self,initial_x, initial_y):
         self.pos_x = initial_x
         self.pos_y = initial_y
+        self.going_up_list = []
+        #self.move_ticker = 0
 
-    def act_map (self, map:Map):
+    def move_around(self,keys,map:Map):
+        if keys[pygame.K_LEFT]:
+            #self.move_ticker = 2
+            move = self.actual_movement_coordinates(map,self.pos_x,self.pos_y-1)
+            self.pos_x += move[0]
+            self.pos_y += move[1]
+
+        if keys[pygame.K_RIGHT]:
+            #self.move_ticker = 2  
+            move = self.actual_movement_coordinates(map,self.pos_x,self.pos_y+1)
+            self.pos_x += move[0]
+            self.pos_y += move[1]
+
+        #This just puts in a list the jump to be made it doesnt actually modify the posicion of the player
+        if keys[pygame.K_UP]:
+                #self.move_ticker = 2
+                if map.map_matrix[(self.pos_x + 1),self.pos_y].density == 1:
+                    self.going_up_list.clear()
+                    self.going_up_list.append(2)
+                    self.going_up_list.append(2)
+                    self.going_up_list.append(2)
+                    self.going_up_list.append(2)
+                    self.going_up_list.append(2)
+        
+        #This is where we actually handle the posicion of the player because is jumping    
+        if len(self.going_up_list) > 0:
+            jump = self.actual_movement_coordinates(map,(self.pos_x - self.going_up_list[0]),self.pos_y)
+            self.pos_x += jump[0]
+            self.pos_y += jump[1]
+            self.going_up_list.pop(0)
+
+        #Handling the natural fall of the player
+        if map.valid_posc(self.pos_x+1,self.pos_y) and map.map_matrix[self.pos_x+1,self.pos_y].density < 1 and not len(self.going_up_list) > 0:
+            #self.move_ticker = 2
+            self.pos_x +=1
+       
+    def actual_movement_coordinates(self,map,intended_x,intended_y):
+        #TODO Propably is gonna have to change so it can return the posible position on laterall movements too, so in future Dashs or tps, it isnt necessary to make another method
+        x = 0
+        y = 0
+        x_movement_todo = self.pos_x-intended_x
+        y_movement_todo = self.pos_y-intended_y
+
+        if x_movement_todo != 0:
+            for i in range(min(abs(x_movement_todo),self.pos_x)):
+                if x_movement_todo > 0:
+                    if  map.map_matrix[(self.pos_x - (i+1)),self.pos_y].density < 1:
+                        x-=1
+                    else:
+                        break
+                if x_movement_todo < 0:
+                    if  map.map_matrix[(self.pos_x + (i+1)),self.pos_y].density < 1:
+                        x+=1
+                    else:
+                        break
+        
+        if y_movement_todo != 0:
+            for i in range(min(abs(y_movement_todo),self.pos_y)):
+                if y_movement_todo > 0:
+                    if  map.map_matrix[self.pos_x ,self.pos_y- (i+1)].density < 1:
+                        y-=1
+                    else:
+                        break
+                if y_movement_todo < 0:
+                    if  map.map_matrix[self.pos_x ,self.pos_y+ (i+1)].density < 1:
+                        y+=1
+                    else:
+                        break
+        return x,y
+
+    def dig_skill(self):
+        #TODO
+        pass
+
+    def act_pos (self, map:Map):
         #not sure if is going to work that way
         pass
 
@@ -102,6 +177,7 @@ class Air(Block):
     directory = (30,30,100)
     def __str__(self) -> str:
         return 'A'
+
 class Game:
     def __init__(self,map_x_size,_map_y_size):
         self.settings = Settings()
@@ -139,22 +215,21 @@ class Game:
         #pygame.draw.rect(window,(0,0,255),[100,100,400,100],2)
         #self.screen = window
         
+    def on_click_dirt(self,mouse_pos_tuple):
+        rect_height = self.settings.provide_settings("resolution")[1]/self.map.map_matrix.shape[0]
+        rect_width = self.settings.provide_settings("resolution")[0]/self.map.map_matrix.shape[1]
+        matrix_x = mouse_pos_tuple[1]//rect_width
+        matrix_y = mouse_pos_tuple[0]//rect_height
+        if matrix_x == int(matrix_x):
+            def_x = int(matrix_x)
+        else:
+            def_x = int(matrix_x)+1
+        if matrix_y == int(matrix_y):
+            def_y = int(matrix_y)
+        else:
+            def_y = int(matrix_y)+1
+
+        self.map.map_matrix[def_x,def_y] = Dirt()  
 
     def recieve_input(self,keys):
-        if self.move_ticker == 0:
-            if keys[pygame.K_LEFT]:
-                    self.move_ticker = 2
-                    if self.player.pos_y !=0:
-                        self.player.pos_y -=1
-
-            if keys[pygame.K_RIGHT]:
-                    self.move_ticker = 2  
-                    if self.player.pos_y != self.map.map_matrix.shape[1]-1:
-                        self.player.pos_y +=1
-            
-            #### This goes in a world method called player_movement or so, i am putting it here just to test the idea
-            if self.map.valid_posc(self.player.pos_x+1,self.player.pos_y) and self.map.map_matrix[self.player.pos_x+1,self.player.pos_y].density < 1:
-                self.move_ticker = 2
-                self.player.pos_x +=1
-        if self.move_ticker > 0:
-            self.move_ticker-=1
+            self.player.move_around(keys,self.map)

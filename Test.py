@@ -10,8 +10,11 @@ c = Utils.Game(90,160)
 screen = pygame.display.set_mode(c.settings.provide_settings("resolution"))
 while True:
     dump = pygame.event.get() #FUCKING PYGAME AND WINDOWS FUCKINGLE THINK PYGAME IS NOT RESPONDING IF YOU DONT INTERACT WITH THE EVENTS FOR TOO LONG
-    time.sleep(0.3)
+    time.sleep(0.05)
     keys = pygame.key.get_pressed()
     c.recieve_input(keys)
     c.paint(screen)
+    check = pygame.mouse.get_pressed()
+    if check[0]:
+        c.on_click_dirt(pygame.mouse.get_pos())
     pygame.display.flip()
